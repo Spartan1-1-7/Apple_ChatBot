@@ -1,11 +1,11 @@
-import torch
+import os
+import streamlit as st
+import requests
 from langchain_core.prompts import PromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.llms import CTransformers
 from langchain.chains import RetrievalQA
-import os
-import requests
+
 DB_FAISS_PATH = 'vector_db'
 
 custom_prompt_template = """
@@ -18,14 +18,6 @@ Question: {question}
 Answer:
 """
 
-def download_model(url, model_path):
-    """Download model from the URL and save it locally."""
-    response = requests.get(url)
-    with open(model_path, 'wb') as f:
-        f.write(response.content)
-    print(f"Model downloaded and saved at {model_path}")
-
-
 def set_custom_prompt():
     """Create a custom prompt template for QA"""
     return PromptTemplate(
@@ -34,22 +26,39 @@ def set_custom_prompt():
     )
 
 def load_llm():
-    """Load the quantized LLaMA model via CTransformers"""
-    model_url = "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/resolve/main/llama-2-7b-chat.ggmlv3.q8_0.bin?download=true"
-    model_path = "llama-2-7b-chat.ggmlv3.q8_0.bin"  
+    """Load the model via Hugging Face API using your token"""
+    # Get the Hugging Face API token from Streamlit secrets
+    hf_api_token = st.secrets["huggingface"]["api_token"]  # Fetch token from secrets
 
-    # If the model is not already downloaded, download it
-    if not os.path.exists(model_path):
-        download_model(model_url, model_path)
+    if not hf_api_token:
+        raise ValueError("Hugging Face API Token is missing. Please set it in Streamlit secrets.")
 
-    llm = CTransformers(
-        model=model_path,
-        model_type='llama',
-        max_new_tokens=512,
-        temperature=0.5,
-        # device='cuda'
-        )  
-    return llm
+    # Set up the Hugging Face API headers
+    headers = {
+        "Authorization": f"Bearer {hf_api_token}"  # Use the token for authentication
+    }
+
+    model_url = "https://api-inference.huggingface.co/models/TheBloke/Llama-2-7B-Chat-GGML"
+    
+    def query_model(input_text):
+        """Function to query the model via Hugging Face API"""
+        payload = {
+            "inputs": input_text,
+            "parameters": {
+                "max_length": 512,         
+                "temperature": 0.7,        
+                "top_p": 0.9,              
+                "top_k": 50,               
+            }
+        }
+        response = requests.post(model_url, headers=headers, json=payload)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {"error": f"Request failed with status code {response.status_code}"}
+
+    return query_model
 
 def retrieval_qa_chain(llm, prompt, db):
     """Create a RetrievalQA chain with custom prompt"""
@@ -66,9 +75,7 @@ def qa_bot():
     """Load the FAISS vector DB and prepare the QA chain"""
     embeddings = HuggingFaceEmbeddings(
         model_name='sentence-transformers/all-MiniLM-L6-v2',
-        # model_kwargs={'device': 'cuda',  'use_pinned_memory': False }  
-        # model_kwargs={'device': 'cuda' }
-        model_kwargs={'device': 'cpu' }
+        model_kwargs={'device': 'cpu'}
     )
     db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
     llm = load_llm()
