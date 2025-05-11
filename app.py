@@ -1,5 +1,10 @@
 import streamlit as st
 from rag_pipeline import final_result
+import os
+os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
+import torch
+torch.classes.__path__ = []  # Neutralizes the path inspection
+
 
 # Page configuration
 st.set_page_config(page_title="Apple Product Chatbot", layout="wide")

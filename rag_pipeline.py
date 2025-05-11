@@ -4,8 +4,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.llms import CTransformers
 from langchain.chains import RetrievalQA
-import os
-os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 
 DB_FAISS_PATH = 'vector_db'
 
@@ -33,8 +31,8 @@ def load_llm():
         model_type='llama',
         max_new_tokens=512,
         temperature=0.5,
-        device='cuda'  # Use GPU (if available)
-    )
+        device='cuda'
+        )  
     return llm
 
 def retrieval_qa_chain(llm, prompt, db):
@@ -52,7 +50,9 @@ def qa_bot():
     """Load the FAISS vector DB and prepare the QA chain"""
     embeddings = HuggingFaceEmbeddings(
         model_name='sentence-transformers/all-MiniLM-L6-v2',
-        model_kwargs={'device': 'cuda'}  # Move to GPU (if available)
+        # model_kwargs={'device': 'cuda',  'use_pinned_memory': False }  # Move to GPU (if available)
+        model_kwargs={'device': 'cuda' }
+        # model_kwargs={'device': 'cpu' }
     )
     db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
     llm = load_llm()
