@@ -11,7 +11,7 @@ st.set_page_config(page_title="Apple Product Chatbot", layout="wide")
 
 # Title at the top-left
 st.markdown("<h1 style='text-align: left;'>Apple Product Chatbot</h1>", unsafe_allow_html=True)
-st.caption("Ask questions about Apple products based on the extracted knowledge base.")
+st.caption("Ask questions about Latest Apple iPhones & MacBooks based on the extracted knowledge base.")
 
 # Initialize session states
 if "messages" not in st.session_state:
