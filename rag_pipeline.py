@@ -25,40 +25,61 @@ def set_custom_prompt():
         input_variables=["context", "question"]
     )
 
-def load_llm():
-    """Load the model via Hugging Face API using your token"""
-    # Get the Hugging Face API token from Streamlit secrets
-    hf_api_token = st.secrets["huggingface"]["api_token"]  # Fetch token from secrets
+# def load_llm():
+#     """Load the model via Hugging Face API using your token"""
+#     # Get the Hugging Face API token from Streamlit secrets
+#     hf_api_token = st.secrets["huggingface"]["api_token"]  # Fetch token from secrets
 
-    if not hf_api_token:
-        raise ValueError("Hugging Face API Token is missing. Please set it in Streamlit secrets.")
+#     if not hf_api_token:
+#         raise ValueError("Hugging Face API Token is missing. Please set it in Streamlit secrets.")
 
-    # Set up the Hugging Face API headers
-    headers = {
-        "Authorization": f"Bearer {hf_api_token}"  # Use the token for authentication
-    }
+#     # Set up the Hugging Face API headers
+#     headers = {
+#         "Authorization": f"Bearer {hf_api_token}"  # Use the token for authentication
+#     }
 
-    model_url = "https://api-inference.huggingface.co/models/TheBloke/Llama-2-7B-Chat-GGML"
+#     model_url = "https://api-inference.huggingface.co/models/TheBloke/Llama-2-7B-Chat-GGML"
     
-    def query_model(input_text):
-        """Function to query the model via Hugging Face API"""
-        payload = {
-            "inputs": input_text,
-            "parameters": {
-                "max_length": 512,         
-                "temperature": 0.7,        
-                "top_p": 0.9,              
-                "top_k": 50,               
-            }
-        }
-        response = requests.post(model_url, headers=headers, json=payload)
+#     def query_model(input_text):
+#         """Function to query the model via Hugging Face API"""
+#         payload = {
+#             "inputs": input_text,
+#             "parameters": {
+#                 "max_length": 512,         
+#                 "temperature": 0.7,        
+#                 "top_p": 0.9,              
+#                 "top_k": 50,               
+#             }
+#         }
+#         response = requests.post(model_url, headers=headers, json=payload)
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {"error": f"Request failed with status code {response.status_code}"}
+#         if response.status_code == 200:
+#             return response.json()
+#         else:
+#             return {"error": f"Request failed with status code {response.status_code}"}
 
-    return query_model
+#     return query_model
+
+HUGGING_FACE_API_KEY = os.getenv("HUGGING_FACE_API_KEY")
+
+def load_llm():
+    """Call the Hugging Face API to load the LLaMA model."""
+    headers = {
+        "Authorization": f"Bearer {HUGGING_FACE_API_KEY}",
+    }
+    
+    api_url = "https://api-inference.huggingface.co/models/TheBloke/Llama-2-7B-Chat-GGML"
+
+    # Making a dummy request to check the response
+    response = requests.get(api_url, headers=headers)
+    
+    if response.status_code == 200:
+        print("Model loaded successfully!")
+    else:
+        print(f"Error: {response.status_code}")
+        return None
+    
+    return api_url  # Returning the model URL or API endpoint
 
 def retrieval_qa_chain(llm, prompt, db):
     """Create a RetrievalQA chain with custom prompt"""
