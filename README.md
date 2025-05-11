@@ -14,7 +14,6 @@ The Apple ChatBot is a project designed to provide an interactive chatbot experi
 - `ingest_db.ipynb`: Jupyter Notebook for ingesting and preprocessing data into the vector database.
 - `vector_db/`: Contains the FAISS index and related files for the vector database.
 - `apple_products_data/`: Directory with Apple product data in PDF format.
-- `backup_folder/`: Backup files and additional resources.
 
 ## Setup Instructions
 1. Clone the repository:
@@ -26,9 +25,11 @@ The Apple ChatBot is a project designed to provide an interactive chatbot experi
    ```bash
    pip install -r requirements.txt
    ```
-3. Run the application:
+3. Download LLaMA 2 model in the working directory.
+
+4. Run the application:
    ```bash
-   python app.py
+   streamlit run app.py
    ```
 
 ## Dependencies
