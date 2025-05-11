@@ -31,7 +31,7 @@ def load_llm():
         model_type='llama',
         max_new_tokens=512,
         temperature=0.5,
-        device='cuda'
+        # device='cuda'
         )  
     return llm
 
@@ -40,7 +40,7 @@ def retrieval_qa_chain(llm, prompt, db):
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type='stuff',
-        retriever=db.as_retriever(search_kwargs={'k': 1}),  # Reduce chunk to prevent token overflow
+        retriever=db.as_retriever(search_kwargs={'k': 1}),  
         return_source_documents=True,
         chain_type_kwargs={'prompt': prompt}
     )
@@ -50,9 +50,9 @@ def qa_bot():
     """Load the FAISS vector DB and prepare the QA chain"""
     embeddings = HuggingFaceEmbeddings(
         model_name='sentence-transformers/all-MiniLM-L6-v2',
-        # model_kwargs={'device': 'cuda',  'use_pinned_memory': False }  # Move to GPU (if available)
-        model_kwargs={'device': 'cuda' }
-        # model_kwargs={'device': 'cpu' }
+        # model_kwargs={'device': 'cuda',  'use_pinned_memory': False }  
+        # model_kwargs={'device': 'cuda' }
+        model_kwargs={'device': 'cpu' }
     )
     db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
     llm = load_llm()
