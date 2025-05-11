@@ -17,6 +17,14 @@ Question: {question}
 Answer:
 """
 
+def download_model(url, model_path):
+    """Download model from the URL and save it locally."""
+    response = requests.get(url)
+    with open(model_path, 'wb') as f:
+        f.write(response.content)
+    print(f"Model downloaded and saved at {model_path}")
+
+
 def set_custom_prompt():
     """Create a custom prompt template for QA"""
     return PromptTemplate(
@@ -26,8 +34,15 @@ def set_custom_prompt():
 
 def load_llm():
     """Load the quantized LLaMA model via CTransformers"""
+    model_url = "https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/resolve/main/llama-2-7b-chat.ggmlv3.q8_0.bin?download=true"
+    model_path = "llama-2-7b-chat.ggmlv3.q8_0.bin"  
+
+    # If the model is not already downloaded, download it
+    if not os.path.exists(model_path):
+        download_model(model_url, model_path)
+
     llm = CTransformers(
-        model='llama-2-7b-chat.ggmlv3.q8_0.bin',
+        model=model_path,
         model_type='llama',
         max_new_tokens=512,
         temperature=0.5,
