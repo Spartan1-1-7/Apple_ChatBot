@@ -1,10 +1,13 @@
-import streamlit as st
+import openai_secret_manager
+import requests
 from langchain_core.prompts import PromptTemplate
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.llms import CTransformers
 from langchain.chains import RetrievalQA
-import requests
+import streamlit as st
+
+# Access your Hugging Face API key from Streamlit secrets
+HUGGING_FACE_API_KEY = st.secrets["huggingface"]["api_key"]
 
 DB_FAISS_PATH = 'vector_db'
 
@@ -26,31 +29,28 @@ def set_custom_prompt():
     )
 
 def load_llm():
-    """Load the LLM using the Hugging Face API"""
-    huggingface_api_key = st.secrets["huggingface"]["api_key"]
-    
-    # Define the API URL for the Hugging Face model
-    url = "https://api-inference.huggingface.co/models/TheBloke/Llama-2-7B-Chat-GGML"
-    
+    """Load the model via Hugging Face API"""
+    model_id = "TheBloke/Llama-2-7B-Chat-GGML"  # Model repo ID on Hugging Face
     headers = {
-        "Authorization": f"Bearer {huggingface_api_key}"
+        "Authorization": f"Bearer {HUGGING_FACE_API_KEY}"
+    }
+    payload = {
+        "inputs": "Hello, world!"  # A sample input for testing the model
     }
     
-    # Make an API request to Hugging Face
-    response = requests.post(url, headers=headers)
-    
+    # Make an API call to Hugging Face model for inference
+    response = requests.post(f"https://api-inference.huggingface.co/models/{model_id}", headers=headers, json=payload)
     if response.status_code == 200:
-        # Load the model from Hugging Face API
-        return response.json()  # Adjust this to how you handle the response to load the model
+        return response.json()  # Assuming a valid response for testing
     else:
-        raise Exception(f"Failed to load model: {response.status_code}, {response.text}")
+        raise Exception(f"Error loading model: {response.status_code} - {response.text}")
 
 def retrieval_qa_chain(llm, prompt, db):
     """Create a RetrievalQA chain with custom prompt"""
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type='stuff',
-        retriever=db.as_retriever(search_kwargs={'k': 1}),  
+        retriever=db.as_retriever(search_kwargs={'k': 1}),
         return_source_documents=True,
         chain_type_kwargs={'prompt': prompt}
     )
@@ -63,7 +63,7 @@ def qa_bot():
         model_kwargs={'device': 'cpu'}
     )
     db = FAISS.load_local(DB_FAISS_PATH, embeddings, allow_dangerous_deserialization=True)
-    llm = load_llm()
+    llm = load_llm()  # This will now load the model via the API call
     prompt = set_custom_prompt()
     qa = retrieval_qa_chain(llm, prompt, db)
     return qa
